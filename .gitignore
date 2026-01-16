@@ -1,0 +1,10 @@
+/target
+/debug
+/release
+**/*.rs.bk
+*.pdb
+*.vst3
+*.clap
+.vscode
+.idea
+*.DS_Store

@@ -1,0 +1,177 @@
+warning: `C:\Users\nalum\nih-plug-projects\dtcwpt_morph\.cargo\config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Checking dtcwpt_morph v0.1.0 (C:\Users\nalum\nih-plug-projects\dtcwpt_morph)
+warning: unused import: `nih_plug_egui::EguiState`
+ --> src\lib.rs:2:5
+  |
+2 | use nih_plug_egui::EguiState;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Shape`
+ --> src\editor.rs:4:97
+  |
+4 | use nih_plug_egui::egui::{self, Color32, RichText, Rect, Pos2, Stroke, CornerRadius, UiBuilder, Shape};
+  |                                                                                                 ^^^^^
+
+warning: unused variable: `modal_response`
+   --> src\editor.rs:232:29
+    |
+232 |                         let modal_response = ui.interact(modal_rect, ui.id().with("overlay_modal"), egui::Sense::click()); 
+    |                             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_modal_response`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src\editor.rs:269:9
+    |
+269 |     let mut transform = ui.data_mut(|d| d.get_temp::<egui::emath::RectTransform>(id))
+    |         ----^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src\editor.rs:285:21
+    |
+285 |                 let mut new_transform = transform.clone();
+    |                     ----^^^^^^^^^^^^^
+    |                     |
+    |                     help: remove this `mut`
+
+warning: unused variable: `pointer`
+   --> src\editor.rs:279:17
+    |
+279 |             let pointer = ui.input(|i| i.pointer.hover_pos()).unwrap_or(rect.center());
+    |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pointer`
+
+warning: unused variable: `new_transform`
+   --> src\editor.rs:285:21
+    |
+285 |                 let mut new_transform = transform.clone();
+    |                     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_new_transform`
+
+warning: unused variable: `is_dest`
+   --> src\editor.rs:416:13
+    |
+416 |         let is_dest = current_dests.contains(&path);
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_dest`
+
+warning: unused variable: `y_curr`
+   --> src\editor.rs:433:17
+    |
+433 |             let y_curr = get_y_for_depth(depth);
+    |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_y_curr`
+
+warning: unused variable: `is_pure_h`
+   --> src\processor.rs:352:17
+    |
+352 | ...   let is_pure_h = dest == 3 || (dest > 1 && (dest & (dest + 1)) == 0 && dest.count_ones() == (dest.trailing_ones())); // Pure H path:...
+    |           ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_pure_h`
+
+warning: unused variable: `node_ids`
+   --> src\processor.rs:539:5
+    |
+539 |     node_ids: &[usize],
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_node_ids`
+
+warning: constant `CDF_H0_BASE` is never used
+  --> src\constants.rs:13:7
+   |
+13 | const CDF_H0_BASE: [f64; 9] = [
+   |       ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `CDF_H1_BASE` is never used
+  --> src\constants.rs:26:7
+   |
+26 | const CDF_H1_BASE: [f64; 7] = [
+   |       ^^^^^^^^^^^
+
+warning: constant `CDF_G0_BASE` is never used
+  --> src\constants.rs:37:7
+   |
+37 | const CDF_G0_BASE: [f64; 7] = [
+   |       ^^^^^^^^^^^
+
+warning: constant `CDF_G1_BASE` is never used
+  --> src\constants.rs:48:7
+   |
+48 | const CDF_G1_BASE: [f64; 9] = [
+   |       ^^^^^^^^^^^
+
+warning: constant `MAX_FILTER_LEN` is never used
+   --> src\constants.rs:353:11
+    |
+353 | pub const MAX_FILTER_LEN: usize = 14;
+    |           ^^^^^^^^^^^^^^
+
+warning: method `delay` is never used
+   --> src\dsp.rs:179:12
+    |
+100 | impl DelayBuffer {
+    | ---------------- method in this implementation
+...
+179 |     pub fn delay(&self) -> usize {
+    |            ^^^^^
+
+warning: associated function `with_threshold_db` is never used
+   --> src\morph.rs:102:12
+    |
+100 | impl MorphParams {
+    | ---------------- associated function in this implementation
+101 |     /// Create MorphParams with threshold specified in decibels.
+102 |     pub fn with_threshold_db(mag: f64, phase: f64, threshold_db: f64, bypass_low: bool, bypass_high: bool) -> Self {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: methods `delay_low` and `delay_high` are never used
+  --> src\nodes.rs:61:12
+   |
+23 | impl AnalysisNode {
+   | ----------------- methods in this implementation
+...
+61 |     pub fn delay_low(&self) -> usize {
+   |            ^^^^^^^^^
+...
+66 |     pub fn delay_high(&self) -> usize {
+   |            ^^^^^^^^^^
+
+warning: field `sample_rate` is never read
+  --> src\processor.rs:17:5
+   |
+13 | pub struct Processor {
+   |            --------- field in this struct
+...
+17 |     sample_rate: f64,
+   |     ^^^^^^^^^^^
+
+warning: method `topology` is never used
+   --> src\processor.rs:296:12
+    |
+ 56 | impl Processor {
+    | -------------- method in this implementation
+...
+296 |     pub fn topology(&self) -> &TopologyPlanner {
+    |            ^^^^^^^^
+
+warning: associated items `index_to_path`, `is_node_active`, and `calculate_path_delay` are never used
+   --> src\topology.rs:64:12
+    |
+ 30 | impl TopologyPlanner {
+    | -------------------- associated items in this implementation
+...
+ 64 |     pub fn index_to_path(idx: usize) -> String {
+    |            ^^^^^^^^^^^^^
+...
+132 |     pub fn is_node_active(&self, idx: usize) -> bool {
+    |            ^^^^^^^^^^^^^^
+...
+145 |     pub fn calculate_path_delay<F>(&self, target_idx: usize, get_delay: F) -> usize
+    |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: `dtcwpt_morph` (lib) generated 22 warnings (run `cargo fix --lib -p dtcwpt_morph` to apply 11 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.63s

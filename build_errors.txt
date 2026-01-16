@@ -1,0 +1,109 @@
+warning: `C:\Users\nalum\nih-plug-projects\dtcwpt_morph\.cargo\config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Checking ttf-parser v0.25.1
+    Checking ab_glyph_rasterizer v0.1.10
+    Checking zerocopy v0.8.33
+    Checking winapi v0.3.9
+    Checking nohash-hasher v0.2.0
+    Checking epaint_default_fonts v0.31.1
+    Checking profiling v1.0.17
+    Checking error-code v3.3.2
+    Checking bytemuck v1.24.0
+    Checking memoffset v0.9.1
+    Checking glow v0.16.0
+    Checking thiserror v2.0.17
+    Checking serde v1.0.228
+    Checking open v5.3.3
+    Checking clipboard-win v5.4.1
+    Checking emath v0.31.1
+    Checking copypasta v0.10.2
+    Checking ecolor v0.31.1
+    Checking ahash v0.8.12
+    Checking owned_ttf_parser v0.25.1
+    Checking ab_glyph v0.2.32
+    Checking epaint v0.31.1
+    Checking atty v0.2.14
+    Checking baseview v0.1.0 (https://github.com/RustAudio/baseview.git?rev=9a0b42c09d712777b2edb4c5e0cb6baf21e988f0#9a0b42c0)
+    Checking nih_log v0.3.1
+    Checking nih_plug v0.0.0 (https://github.com/robbert-vdh/nih-plug.git#28b149ec)
+    Checking egui v0.31.1
+    Checking egui_glow v0.31.1
+    Checking egui-baseview v0.5.0 (https://github.com/BillyDM/egui-baseview.git?rev=ec70c3fe6b2f070dcacbc22924431edbe24bd1c0#ec70c3fe)
+    Checking nih_plug_egui v0.0.0 (https://github.com/robbert-vdh/nih-plug.git#28b149ec)
+    Checking dtcwpt_morph v0.1.0 (C:\Users\nalum\nih-plug-projects\dtcwpt_morph)
+warning: use of deprecated type alias `nih_plug_egui::egui::Rounding`: Renamed to CornerRadius
+ --> src\editor.rs:4:80
+  |
+4 | use nih_plug_egui::egui::{self, Color32, RichText, Slider, Rect, Pos2, Stroke, Rounding};
+  |                                                                                ^^^^^^^^
+  |
+  = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated type alias `nih_plug_egui::egui::Rounding`: Renamed to CornerRadius
+  --> src\editor.rs:47:63
+   |
+47 |                         ui.painter().rect_filled(header_rect, Rounding::ZERO, HEADER_COLOR);
+   |                                                               ^^^^^^^^
+
+warning: use of deprecated type alias `nih_plug_egui::egui::Rounding`: Renamed to CornerRadius
+  --> src\editor.rs:75:65
+   |
+75 |                         ui.painter().rect_filled(analyzer_rect, Rounding::same(4.0), ANALYZER_BG);
+   |                                                                 ^^^^^^^^
+
+warning: use of deprecated associated function `nih_plug_egui::egui::Frame::none`: Use `Frame::NONE` or `Frame::new()` instead.
+  --> src\editor.rs:36:37
+   |
+36 |                 .frame(egui::Frame::none().fill(BG_COLOR))
+   |                                     ^^^^
+
+warning: use of deprecated method `nih_plug_egui::egui::Ui::allocate_ui_at_rect`: Use `allocate_new_ui` instead
+  --> src\editor.rs:46:24
+   |
+46 |                     ui.allocate_ui_at_rect(header_rect, |ui| {
+   |                        ^^^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `nih_plug_egui::egui::Ui::allocate_ui_at_rect`: Use `allocate_new_ui` instead
+  --> src\editor.rs:74:24
+   |
+74 |                     ui.allocate_ui_at_rect(analyzer_rect, |ui| {
+   |                        ^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+  --> src\editor.rs:75:80
+   |
+75 |                         ui.painter().rect_filled(analyzer_rect, Rounding::same(4.0), ANALYZER_BG);
+   |                                                                 -------------- ^^^ expected `u8`, found floating-point number
+   |                                                                 |
+   |                                                                 arguments to this function are incorrect
+   |
+note: associated function defined here
+  --> C:\Users\nalum\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\epaint-0.31.1\src\corner_radius.rs:59:18
+   |
+59 |     pub const fn same(radius: u8) -> Self {
+   |                  ^^^^
+
+warning: use of deprecated method `nih_plug_egui::egui::Ui::allocate_ui_at_rect`: Use `allocate_new_ui` instead
+   --> src\editor.rs:102:24
+    |
+102 |                     ui.allocate_ui_at_rect(params_rect, |ui| {
+    |                        ^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `is_pure_h`
+   --> src\processor.rs:352:17
+    |
+352 | ...   let is_pure_h = dest == 3 || (dest > 1 && (dest & (dest + 1)) == 0 && dest.count_ones() == (dest.trailing_ones())); // Pure H path:...
+    |           ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_pure_h`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `node_ids`
+   --> src\processor.rs:539:5
+    |
+539 |     node_ids: &[usize],
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_node_ids`
+
+For more information about this error, try `rustc --explain E0308`.
+warning: `dtcwpt_morph` (lib) generated 9 warnings
+error: could not compile `dtcwpt_morph` (lib) due to 1 previous error; 9 warnings emitted

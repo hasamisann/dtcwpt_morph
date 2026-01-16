@@ -1,0 +1,42 @@
+warning: `C:\Users\nalum\nih-plug-projects\dtcwpt_morph\.cargo\config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Checking dtcwpt_morph v0.1.0 (C:\Users\nalum\nih-plug-projects\dtcwpt_morph)
+error[E0422]: cannot find struct, variant or union type `AuxiliaryInput` in this scope
+   --> src\lib.rs:129:17
+    |
+129 |                 AuxiliaryInput {
+    |                 ^^^^^^^^^^^^^^ not found in this scope
+
+warning: unused import: `nih_plug_egui::EguiState`
+ --> src\lib.rs:2:5
+  |
+2 | use nih_plug_egui::EguiState;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0433]: failed to resolve: use of undeclared type `AuxiliaryInput`
+   --> src\lib.rs:132:23
+    |
+132 |                     ..AuxiliaryInput::const_default()
+    |                       ^^^^^^^^^^^^^^ use of undeclared type `AuxiliaryInput`
+
+warning: unused variable: `is_pure_h`
+   --> src\processor.rs:352:17
+    |
+352 | ...   let is_pure_h = dest == 3 || (dest > 1 && (dest & (dest + 1)) == 0 && dest.count_ones() == (dest.trailing_ones())); // Pure H path:...
+    |           ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_pure_h`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `node_ids`
+   --> src\processor.rs:539:5
+    |
+539 |     node_ids: &[usize],
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_node_ids`
+
+Some errors have detailed explanations: E0422, E0433.
+For more information about an error, try `rustc --explain E0422`.
+warning: `dtcwpt_morph` (lib) generated 3 warnings
+error: could not compile `dtcwpt_morph` (lib) due to 2 previous errors; 3 warnings emitted

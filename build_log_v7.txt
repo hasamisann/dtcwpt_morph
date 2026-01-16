@@ -1,0 +1,159 @@
+warning: `C:\Users\nalum\nih-plug-projects\dtcwpt_morph\.cargo\config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Checking dtcwpt_morph v0.1.0 (C:\Users\nalum\nih-plug-projects\dtcwpt_morph)
+error[E0434]: can't capture dynamic environment in a fn item
+   --> src\editor.rs:431:26
+    |
+431 |             let y_curr = get_y_for_depth(depth);
+    |                          ^^^^^^^^^^^^^^^
+    |
+    = help: use the `|| { ... }` closure form instead
+
+error[E0434]: can't capture dynamic environment in a fn item
+   --> src\editor.rs:432:26
+    |
+432 |             let y_next = get_y_for_depth(depth + 1);
+    |                          ^^^^^^^^^^^^^^^
+    |
+    = help: use the `|| { ... }` closure form instead
+
+error[E0434]: can't capture dynamic environment in a fn item
+   --> src\editor.rs:440:152
+    |
+440 | ...idx, l_log_pos, logical_width / 2.0, current_dests, changed, sample_rate);
+    |                                                                 ^^^^^^^^^^^
+    |
+    = help: use the `|| { ... }` closure form instead
+
+error[E0434]: can't capture dynamic environment in a fn item
+   --> src\editor.rs:448:152
+    |
+448 | ...idx, r_log_pos, logical_width / 2.0, current_dests, changed, sample_rate);
+    |                                                                 ^^^^^^^^^^^
+    |
+    = help: use the `|| { ... }` closure form instead
+
+error[E0434]: can't capture dynamic environment in a fn item
+   --> src\editor.rs:490:31
+    |
+490 |                 let nyquist = sample_rate / 2.0;
+    |                               ^^^^^^^^^^^
+    |
+    = help: use the `|| { ... }` closure form instead
+
+warning: unused import: `nih_plug_egui::EguiState`
+ --> src\lib.rs:2:5
+  |
+2 | use nih_plug_egui::EguiState;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Shape`
+ --> src\editor.rs:4:97
+  |
+4 | use nih_plug_egui::egui::{self, Color32, RichText, Rect, Pos2, Stroke, CornerRadius, UiBuilder, Shape};
+  |                                                                                                 ^^^^^
+
+error[E0689]: can't call method `powf` on ambiguous numeric type `{float}`
+   --> src\editor.rs:382:32
+    |
+382 |             y += base * factor.powf(i as f32);
+    |                                ^^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+378 |         let factor: f32 = 0.85; // Compression factor
+    |                   +++++
+
+error[E0689]: can't call method `powf` on ambiguous numeric type `{float}`
+   --> src\editor.rs:388:36
+    |
+388 |             total += base * factor.powf(i as f32);
+    |                                    ^^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+378 |         let factor: f32 = 0.85; // Compression factor
+    |                   +++++
+
+error[E0061]: this function takes 11 arguments but 12 arguments were supplied
+   --> src\editor.rs:512:5
+    |
+512 |     draw_node(
+    |     ^^^^^^^^^
+...
+524 |         sample_rate
+    |         ----------- unexpected argument #12 of type `f32`
+    |
+note: function defined here
+   --> src\editor.rs:401:8
+    |
+401 |     fn draw_node(
+    |        ^^^^^^^^^
+help: remove the extra argument
+    |
+523 -         &mut changed,
+524 -         sample_rate
+523 +         &mut changed
+    |
+
+error[E0061]: this function takes 11 arguments but 12 arguments were supplied
+   --> src\editor.rs:440:13
+    |
+440 | ...   draw_node(painter, ui, to_screen, path.clone() + "L", depth + 1, max_depth, l_idx, l_log_pos, logical_width / 2.0, current_dests, changed, sample_rate);
+    |       ^^^^^^^^^                                                                                                                                  ----------- unexpected argument #12
+    |
+note: function defined here
+   --> src\editor.rs:401:8
+    |
+401 |     fn draw_node(
+    |        ^^^^^^^^^
+help: remove the extra argument
+    |
+440 -             draw_node(painter, ui, to_screen, path.clone() + "L", depth + 1, max_depth, l_idx, l_log_pos, logical_width / 2.0, current_dests, changed, sample_rate);
+440 +             draw_node(painter, ui, to_screen, path.clone() + "L", depth + 1, max_depth, l_idx, l_log_pos, logical_width / 2.0, current_dests, changed);
+    |
+
+error[E0061]: this function takes 11 arguments but 12 arguments were supplied
+   --> src\editor.rs:448:13
+    |
+448 | ...   draw_node(painter, ui, to_screen, path.clone() + "H", depth + 1, max_depth, r_idx, r_log_pos, logical_width / 2.0, current_dests, changed, sample_rate);
+    |       ^^^^^^^^^                                                                                                                                  ----------- unexpected argument #12
+    |
+note: function defined here
+   --> src\editor.rs:401:8
+    |
+401 |     fn draw_node(
+    |        ^^^^^^^^^
+help: remove the extra argument
+    |
+448 -             draw_node(painter, ui, to_screen, path.clone() + "H", depth + 1, max_depth, r_idx, r_log_pos, logical_width / 2.0, current_dests, changed, sample_rate);
+448 +             draw_node(painter, ui, to_screen, path.clone() + "H", depth + 1, max_depth, r_idx, r_log_pos, logical_width / 2.0, current_dests, changed);
+    |
+
+warning: unused variable: `modal_response`
+   --> src\editor.rs:232:29
+    |
+232 |                         let modal_response = ui.interact(modal_rect, ui.id().with("overlay_modal"), egui::Sense::click()); 
+    |                             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_modal_response`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `is_pure_h`
+   --> src\processor.rs:352:17
+    |
+352 | ...   let is_pure_h = dest == 3 || (dest > 1 && (dest & (dest + 1)) == 0 && dest.count_ones() == (dest.trailing_ones())); // Pure H path:...
+    |           ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_pure_h`
+
+warning: unused variable: `node_ids`
+   --> src\processor.rs:539:5
+    |
+539 |     node_ids: &[usize],
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_node_ids`
+
+Some errors have detailed explanations: E0061, E0434, E0689.
+For more information about an error, try `rustc --explain E0061`.
+warning: `dtcwpt_morph` (lib) generated 5 warnings
+error: could not compile `dtcwpt_morph` (lib) due to 10 previous errors; 5 warnings emitted

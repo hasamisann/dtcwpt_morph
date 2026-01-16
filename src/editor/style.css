@@ -1,0 +1,62 @@
+/* DT-CWPT Morph - Dark Theme */
+
+.main-container {
+  background-color: #1a1a2e;
+  padding: 15px;
+  color: #e0e0e0;
+}
+
+/* Parameter columns */
+.param-column {
+  width: 1s;
+  height: auto;
+  background-color: #16213e;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.param-label {
+  font-size: 14px;
+  color: #a0a0a0;
+  height: 20px;
+  text-align: center;
+}
+
+.param-slider {
+  height: 60px;
+}
+
+/* Section labels */
+.section-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #e94560;
+  height: 25px;
+  margin-bottom: 5px;
+}
+
+/* Bypass section */
+.bypass-section {
+  background-color: #16213e;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.bypass-row {
+  height: 30px;
+  layout-type: row;
+}
+
+.bypass-button {
+  width: 20px;
+  height: 20px;
+}
+
+.bypass-label {
+  font-size: 13px;
+  color: #c0c0c0;
+  left: 5px;
+  top: 1s;
+  bottom: 1s;
+}
