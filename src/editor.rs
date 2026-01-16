@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use crate::{DtcwptMorphParams, SharedTopologyState};
 
-const WINDOW_WIDTH: u32 = 300;
+const WINDOW_WIDTH: u32 = 280;
 const WINDOW_HEIGHT: u32 = 360;
 
 // Colors
@@ -110,7 +110,7 @@ pub fn create(
                                                 let response = ui.add(crate::knob::Knob::new(&mut mag, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
                                                     .with_size(30.0)
                                                     .with_sweep_range(0.125, 0.75)
-                                                    .with_label("Magnitude", crate::knob::LabelPosition::Bottom)
+                                                    .with_label("Mag", crate::knob::LabelPosition::Bottom)
                                                     .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
                                                     .with_drag_sensitivity(0.015));
                                                 if response.changed() {
@@ -156,7 +156,7 @@ pub fn create(
                                                 let response = ui.add(crate::knob::Knob::new(&mut thr, -60.0, 0.0, crate::knob::KnobStyle::Wiper)
                                                     .with_size(30.0)
                                                     .with_sweep_range(0.125, 0.75)
-                                                    .with_label("Threshold", crate::knob::LabelPosition::Bottom)
+                                                    .with_label("Thres", crate::knob::LabelPosition::Bottom)
                                                     .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
                                                     .with_drag_sensitivity(0.015)
                                                     .with_label_format(|v| format!("{:.1} dB", v)));
