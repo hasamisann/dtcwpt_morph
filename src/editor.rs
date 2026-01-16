@@ -74,13 +74,13 @@ pub fn create(
                                                 egui::Layout::right_to_left(egui::Align::Center), 
                                                 |ui| {
                                                     ui.spacing_mut().item_spacing.x = 12.0; // Match frame margin
-                                                    // Gear -> Settings
-                                                    if ui.button(RichText::new("⚙").color(TEXT_COLOR)).clicked() {
-                                                        state.view = View::Settings;
-                                                    }
                                                     // Info -> About
                                                     if ui.button(RichText::new("ℹ").color(TEXT_COLOR)).clicked() {
                                                         state.view = View::About;
+                                                    }
+                                                    // Gear -> Settings
+                                                    if ui.button(RichText::new("⚙").color(TEXT_COLOR)).clicked() {
+                                                        state.view = View::Settings;
                                                     }
                                                 }
                                             );
@@ -224,6 +224,8 @@ pub fn create(
                                                 ui.available_size(),
                                                 egui::Layout::right_to_left(egui::Align::Center), 
                                                 |ui| {
+                                                     // Widen Back button (approx 1.2x)
+                                                     ui.spacing_mut().button_padding.x *= 1.5; 
                                                      if ui.button(RichText::new("Back").color(TEXT_COLOR)).clicked() {
                                                          state.view = View::Main;
                                                      }
@@ -253,6 +255,8 @@ pub fn create(
                                                 ui.available_size(),
                                                 egui::Layout::right_to_left(egui::Align::Center), 
                                                 |ui| {
+                                                     // Widen Back button (approx 1.2x)
+                                                     ui.spacing_mut().button_padding.x *= 1.5;
                                                      if ui.button(RichText::new("Back").color(TEXT_COLOR)).clicked() {
                                                          state.view = View::Main;
                                                      }
