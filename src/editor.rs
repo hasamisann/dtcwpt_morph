@@ -320,7 +320,14 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
             let new_scale = (view.scale * zoom_delta).clamp(0.1, 10.0);
             let effective_zoom = new_scale / view.scale;
             
-            view.offset = pointer.to_vec2() + (view.offset - pointer.to_vec2()) * effective_zoom;
+            // X Axis: Origin is Left (rect.min.x). Pointer is already relative to Left.
+            view.offset.x = pointer.x + (view.offset.x - pointer.x) * effective_zoom;
+
+            // Y Axis: Origin is Bottom (rect.max.y).
+            // pointer.y is relative to Top. Convert to relative to Bottom.
+            let pivot_y = pointer.y - rect.height();
+            view.offset.y = pivot_y + (view.offset.y - pivot_y) * effective_zoom;
+
             view.scale = new_scale;
         }
     }
