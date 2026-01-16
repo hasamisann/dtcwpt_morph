@@ -52,6 +52,7 @@ pub fn create(
         move |egui_ctx, setter, state| {
             // Fixed Size Window - No Resizing
             egui::CentralPanel::default()
+                .frame(egui::Frame::default().fill(BG_COLOR)) // Remove default margin (8px)
                 .show(egui_ctx, |ui| {
                      // Main Layout Logic
                      ui.set_min_size(egui::vec2(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32));
@@ -67,17 +68,22 @@ pub fn create(
                                         ui.horizontal(|ui| {
                                             ui.label(RichText::new("DT-CWPT Morph").size(14.0).strong().color(Color32::WHITE));
                                             
-                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                                // Gear -> Settings
-                                                if ui.button(RichText::new("⚙").color(TEXT_COLOR)).clicked() {
-                                                    state.view = View::Settings;
+                                            // Right aligned buttons
+                                            ui.allocate_ui_with_layout(
+                                                ui.available_size(),
+                                                egui::Layout::right_to_left(egui::Align::Center), 
+                                                |ui| {
+                                                    ui.spacing_mut().item_spacing.x = 12.0; // Match frame margin
+                                                    // Gear -> Settings
+                                                    if ui.button(RichText::new("⚙").color(TEXT_COLOR)).clicked() {
+                                                        state.view = View::Settings;
+                                                    }
+                                                    // Info -> About
+                                                    if ui.button(RichText::new("ℹ").color(TEXT_COLOR)).clicked() {
+                                                        state.view = View::About;
+                                                    }
                                                 }
-                                                ui.add_space(8.0);
-                                                // Info -> About
-                                                if ui.button(RichText::new("ℹ").color(TEXT_COLOR)).clicked() {
-                                                    state.view = View::About;
-                                                }
-                                            });
+                                            );
                                         });
                                     });
 
@@ -100,7 +106,8 @@ pub fn create(
                                 ui.add_space(15.0);
 
                                 // ========== PARAMETERS ==========
-                                egui::Frame::default().inner_margin(10).show(ui, |ui| {
+                                // No wrapper margin, let columns fill width
+                                egui::Frame::default().inner_margin(0).show(ui, |ui| {
                                     ui.vertical(|ui| {
                                         // Sliders row - Grid Layout (3 columns)
                                         ui.columns(3, |cols| {
@@ -211,11 +218,17 @@ pub fn create(
                                     .inner_margin(egui::Margin::symmetric(12, 8))
                                     .show(ui, |ui| {
                                         ui.horizontal(|ui| {
-                                            if ui.button(RichText::new(" < Back ").color(TEXT_COLOR)).clicked() {
-                                                state.view = View::Main;
-                                            }
-                                            ui.add_space(8.0);
                                             ui.label(RichText::new("Splitter Editor").size(14.0).strong().color(Color32::WHITE));
+                                            
+                                            ui.allocate_ui_with_layout(
+                                                ui.available_size(),
+                                                egui::Layout::right_to_left(egui::Align::Center), 
+                                                |ui| {
+                                                     if ui.button(RichText::new("Back").color(TEXT_COLOR)).clicked() {
+                                                         state.view = View::Main;
+                                                     }
+                                                }
+                                            );
                                         });
                                     });
 
@@ -234,11 +247,17 @@ pub fn create(
                                     .inner_margin(egui::Margin::symmetric(12, 8))
                                     .show(ui, |ui| {
                                         ui.horizontal(|ui| {
-                                            if ui.button(RichText::new(" < Back ").color(TEXT_COLOR)).clicked() {
-                                                state.view = View::Main;
-                                            }
-                                            ui.add_space(8.0);
                                             ui.label(RichText::new("About").size(14.0).strong().color(Color32::WHITE));
+                                            
+                                            ui.allocate_ui_with_layout(
+                                                ui.available_size(),
+                                                egui::Layout::right_to_left(egui::Align::Center), 
+                                                |ui| {
+                                                     if ui.button(RichText::new("Back").color(TEXT_COLOR)).clicked() {
+                                                         state.view = View::Main;
+                                                     }
+                                                }
+                                            );
                                         });
                                     });
                                 
