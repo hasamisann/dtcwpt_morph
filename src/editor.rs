@@ -297,14 +297,14 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
     // Y axis = Frequency (Low Bottom -> High Top, usually)
     // "Frequency axis is on the right" -> We place axis at rect.max.x
 
-    let id = ui.id().with("topo_editor");
+    let id = ui.id().with("topo_editor_v2");
     // State: offset (pixels), scale (multiplier)
     #[derive(Clone, Copy)]
     struct ViewState { offset: egui::Vec2, scale: f32 }
     let mut view = ui.data_mut(|d| d.get_temp::<ViewState>(id))
         .unwrap_or(ViewState { 
-            offset: egui::vec2(0.0, 0.0), 
-            scale: 0.95 
+            offset: egui::vec2(0.0, -30.0), 
+            scale: 0.9
         });
 
     // Interact for Pan/Zoom
