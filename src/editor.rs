@@ -7,8 +7,8 @@ use std::sync::Arc;
 
 use crate::{DtcwptMorphParams, SharedTopologyState};
 
-const WINDOW_WIDTH: u32 = 500;
-const WINDOW_HEIGHT: u32 = 400;
+const WINDOW_WIDTH: u32 = 400;
+const WINDOW_HEIGHT: u32 = 500;
 
 // Colors
 const BG_COLOR: Color32 = Color32::from_rgb(20, 20, 28);
@@ -22,6 +22,12 @@ pub fn default_state() -> Arc<EguiState> {
     EguiState::from_size(WINDOW_WIDTH, WINDOW_HEIGHT)
 }
 
+// Initial state type
+struct GuiFlags {
+    show_settings: bool,
+    show_about: bool,
+}
+
 /// Create the egui editor.
 pub fn create(
     params: Arc<DtcwptMorphParams>,
@@ -31,12 +37,13 @@ pub fn create(
 ) -> Option<Box<dyn Editor>> {
     create_egui_editor(
         editor_state,
-        false, // show_settings
+        GuiFlags { show_settings: false, show_about: false },
         |_, _| {},
-        move |egui_ctx, setter, show_settings| {
+        move |egui_ctx, setter, flags| {
             egui::CentralPanel::default()
                 .frame(egui::Frame::NONE.fill(BG_COLOR))
-                .show(egui_ctx, |ui| {
+                .show(egui_ctx, |ui| { // Change show_settings to flags
+
                     let available = ui.available_rect_before_wrap();
                     
                     // ========== HEADER ==========
@@ -59,9 +66,17 @@ pub fn create(
                             // Spacer to push gear to right
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 ui.add_space(12.0);
-                                let gear_color = if *show_settings { ACCENT_COLOR } else { TEXT_COLOR };
+                                let gear_color = if flags.show_settings { ACCENT_COLOR } else { TEXT_COLOR };
                                 if ui.button(RichText::new("⚙").color(gear_color)).clicked() {
-                                    *show_settings = !*show_settings;
+                                    flags.show_settings = !flags.show_settings;
+                                    flags.show_about = false; // Close others
+                                }
+                                
+                                ui.add_space(8.0);
+                                let info_color = if flags.show_about { ACCENT_COLOR } else { TEXT_COLOR };
+                                if ui.button(RichText::new("ℹ").color(info_color)).clicked() {
+                                    flags.show_about = !flags.show_about;
+                                    flags.show_settings = false; // Close others
                                 }
                             });
                         });
@@ -212,7 +227,7 @@ pub fn create(
                     });
 
                     // ========== SETTINGS OVERLAY ==========
-                    if *show_settings {
+                    if flags.show_settings {
                         let overlay_rect = available;
                         ui.painter().rect_filled(
                             overlay_rect,
@@ -223,13 +238,13 @@ pub fn create(
                         // Click background to close
                         let bg_response = ui.interact(overlay_rect, ui.id().with("overlay_bg"), egui::Sense::click());
                         if bg_response.clicked() {
-                            *show_settings = false;
+                            flags.show_settings = false;
                         }
 
                         // Modal window area
                         let modal_rect = overlay_rect.shrink(40.0);
                         // Make sure modal eats clicks so they don't hit background
-                        let modal_response = ui.interact(modal_rect, ui.id().with("overlay_modal"), egui::Sense::click()); 
+                        let _modal_response = ui.interact(modal_rect, ui.id().with("overlay_modal"), egui::Sense::click()); 
 
                         ui.allocate_new_ui(UiBuilder::new().max_rect(modal_rect), |ui| {
                             ui.painter().rect_filled(modal_rect, CornerRadius::same(8), HEADER_COLOR);
@@ -244,6 +259,55 @@ pub fn create(
                                 // Topology Visualizer
                                 let tree_area = modal_rect.shrink2(egui::vec2(10.0, 40.0));
                                 draw_topology_editor(ui, tree_area, &topology_state, sample_rate);
+                            });
+                        });
+                    }
+
+                    // ========== ABOUT OVERLAY ==========
+                    if flags.show_about {
+                        let overlay_rect = available;
+                        ui.painter().rect_filled(
+                            overlay_rect,
+                            CornerRadius::ZERO,
+                            Color32::from_black_alpha(200),
+                        );
+                        
+                        let bg_response = ui.interact(overlay_rect, ui.id().with("about_bg"), egui::Sense::click());
+                        if bg_response.clicked() {
+                            flags.show_about = false;
+                        }
+                        
+                        let modal_rect = overlay_rect.shrink(80.0); // Smaller than settings
+                        let _modal_response = ui.interact(modal_rect, ui.id().with("about_modal"), egui::Sense::click()); 
+
+                        ui.allocate_new_ui(UiBuilder::new().max_rect(modal_rect), |ui| {
+                            ui.painter().rect_filled(modal_rect, CornerRadius::same(8), HEADER_COLOR);
+                            ui.painter().rect_stroke(modal_rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), egui::StrokeKind::Inside);
+                            
+                            ui.vertical_centered(|ui| {
+                                ui.add_space(20.0);
+                                ui.label(RichText::new("DT-CWPT Morph").size(24.0).strong().color(Color32::WHITE));
+                                ui.label(RichText::new("Beta Release").size(12.0).color(TEXT_DIM));
+                                
+                                ui.add_space(30.0);
+                                
+                                // Links
+                                if ui.hyperlink_to("GitHub Repository", "https://github.com/hasamisann/dtcwpt_morph").clicked() {
+                                    // handled
+                                }
+                                ui.add_space(10.0);
+                                if ui.hyperlink_to("X (Twitter): @LTSU_n_nv", "https://x.com/LTSU_n_nv").clicked() {
+                                    // handled
+                                }
+                                ui.add_space(10.0);
+                                if ui.hyperlink_to("SoundCloud: @LTSU_n_nv", "https://soundcloud.com/LTSU_n_nv").clicked() {
+                                    // handled
+                                }
+                                
+                                ui.add_space(50.0);
+                                
+                                // Legal Footer
+                                ui.label(RichText::new("VST is a registered trademark of Steinberg Media Technologies GmbH").size(10.0).color(TEXT_DIM));
                             });
                         });
                     }
