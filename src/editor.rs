@@ -292,93 +292,48 @@ pub fn create(
 fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologyState, sample_rate: f32) {
     let max_depth = 8;
     
-    // Frequency Axis
-    // We want to show a guide logic.
-    // X = 0.0 -> 0 Hz
-    // X = 1.0 -> sample_rate / 2.0 Hz
-    // We use a persistent ID to store transform state if possible, or just default.
-    // Egui's `scroll_to_me` or `Window` are options, but implementing simple drag/zoom is manual.
-    // For simplicity in this iteration: Fixed view with "Fit to Screen" layout logic that handles depth 8.
-    // Depth 8 has 256 leaves. That requires ~4000px width for distinct nodes if strictly linear.
-    // We will use a virtual coordinate system and transform user inputs.
+    // Horizontal Layout:
+    // X axis = Depth (Root Left -> Children Right)
+    // Y axis = Frequency (Low Bottom -> High Top, usually)
+    // "Frequency axis is on the right" -> We place axis at rect.max.x
 
     let id = ui.id().with("topo_editor");
-    let mut transform = ui.data_mut(|d| d.get_temp::<egui::emath::RectTransform>(id))
-        .unwrap_or_else(|| egui::emath::RectTransform::identity(rect));
-
-    // Interact for Pan/Zoom
-    let response = ui.interact(rect, id, egui::Sense::drag());
-    
-    // Handle Zoom (Scroll)
-    if response.hovered() {
-        let zoom_delta = ui.input(|i| i.zoom_delta());
-        if zoom_delta != 1.0 {
-            let _pointer = ui.input(|i| i.pointer.hover_pos()).unwrap_or(rect.center());
-            // Scale around pointer
-            let scale = zoom_delta;
-            let new_scale = transform.scale() * scale;
-            // Limit zoom
-            if new_scale.x > 0.1 && new_scale.x < 10.0 {
-                let _new_transform = transform.clone();
-                // Simple scaling approach: just scale the `to` rect?
-                // RectTransform maps `from` (normalized 0..1 or logical) to `to` (screen).
-                // Let's implement manual offset/scale.
-            }
-        }
-    }
-    
-    // Manual transform management
-    // state: (offset: Vec2, scale: f32)
+    // State: offset (pixels), scale (multiplier)
     #[derive(Clone, Copy)]
     struct ViewState { offset: egui::Vec2, scale: f32 }
     let mut view = ui.data_mut(|d| d.get_temp::<ViewState>(id))
         .unwrap_or(ViewState { 
-            offset: egui::vec2(rect.width() * 0.025, rect.height() * 0.025), 
+            offset: egui::vec2(0.0, 0.0), 
             scale: 0.95 
         });
 
+    // Interact for Pan/Zoom
+    let response = ui.interact(rect, id, egui::Sense::drag());
+    
+    // Zoom
+    if response.hovered() {
+        let zoom_delta = ui.input(|i| i.zoom_delta());
+        if zoom_delta != 1.0 {
+            // Zoom centered roughly? Or just simplistic scale.
+            // Let's zoom towards pointer for better UX.
+            let pointer = ui.input(|i| i.pointer.hover_pos()).unwrap_or(rect.center()) - rect.min.to_vec2();
+            // P_visual = offset + P_logical * size * scale
+            // P_visual - pointer = new_offset + ...
+            // Simplified: Scale around pointer.
+            // offset' = pointer - (pointer - offset) * zoom
+            view.offset = pointer.to_vec2() + (view.offset - pointer.to_vec2()) * zoom_delta;
+            view.scale *= zoom_delta;
+        }
+    }
+    
+    // Pan
     if response.dragged() {
         view.offset += response.drag_delta();
     }
-    if response.hovered() {
-        let zoom = ui.input(|i| i.zoom_delta());
-        if zoom != 1.0 {
-            let pointer = ui.input(|i| i.pointer.hover_pos()).unwrap_or(rect.center()) - rect.min.to_vec2();
-            // Zoom towards pointer:
-            // new_offset = offset + (pointer - offset) * (1 - zoom)
-            // But dragging moves offset. Scale affects drawing.
-            // Let's optimize: simple centered zoom for now or just scale.
-            
-            // Zoom centered relative to pointer in screen space?
-            // Easier: Adjust scale, adjust offset to keep pointer stable.
-            // p_screen = Rect.min + offset + (logical * rect_size * scale)
-            // relative_p = p_screen - Rect.min = offset + (logical * rect_size * scale)
-            // We want to keep p_screen constant under mouse.
-            
-            // Let's simplify: view.offset and view.scale apply to the "Rect-normalized" space.
-            // visual_pos = func(logical_pos)
-            // visual_pos = offset + logical_pos * size * scale
-            // When scaling:
-            // p_rel = visual_pos under mouse relative to rect.min
-            // p_rel = offset + logical_under_mouse * size * scale
-            // If scale changes to scale_new, and we want p_rel to stay same:
-            // offset_new + logical_under_mouse * size * scale_new = offset + logical_under_mouse * size * scale
-            // logical_under_mouse * size = (p_rel - offset) / scale
-            // offset_new = p_rel - (p_rel - offset) / scale * scale_new
-            // offset_new = p_rel - (p_rel - offset) * (scale_new / scale)
-            // offset_new = p_rel * (1 - zoom_factor) + offset * zoom_factor   <-- This was correct IF p_rel is in same coord system as offset
-            
-            // Yes, p_rel is pixel offset from rect.min. view.offset is pixel offset.
-            // So the math holds.
-            
-            let p_rel = pointer;
-            view.offset = p_rel.to_vec2() * (1.0 - zoom) + view.offset * zoom;
-            view.scale *= zoom;
-        }
-    }
+    
     ui.data_mut(|d| d.insert_temp(id, view));
 
-    // Clip to rect
+    // Clip
     let painter = ui.painter().with_clip_rect(rect);
 
     // Get current destinations
@@ -386,77 +341,57 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
         let config = state.config.lock().unwrap();
         config.destinations.clone()
     };
-
     let mut changed = false;
 
-    // Helper: Screen projection
-    let to_screen = |logical_pos: Pos2| -> Pos2 {
-        let base_x = logical_pos.x * rect.width();
+    // Helper: Depth to X (0..1)
+    let get_x_for_depth = |d: usize| -> f32 {
+        // Linear or Geometric? 
+        // 280px width is tight. Simple linear might be best or slight compression.
+        // Let's use geometric to allow more space for root? Or vice versa?
+        // Usually deep levels get crowded Y-wise. X-wise we have consistent branching.
+        // Linear X is probably cleanest.
         
-        // Variable vertical compression:
-        // Use a power law or exponential decay for Y steps?
-        // Let y_linear = logical_pos.y
-        // We want step size to decrease.
-        // But draw_node calculates logical_pos.y assuming linear steps. 
-        // We should adjust logical_pos.y calculation in draw_node instead!
-        // So here we keep linear mapping.
+        let margin_left = 0.05;
+        let margin_right = 0.20; // Room for axis Labels
+        let useful = 1.0 - margin_left - margin_right;
         
-        let base_y = logical_pos.y * rect.height();
-        rect.min + view.offset + egui::vec2(base_x, base_y) * view.scale
+        margin_left + (d as f32 / max_depth as f32) * useful
     };
 
-    // Helper: Y position for depth
-    let get_y_for_depth = |d: usize| -> f32 {
-        // Linear: d / (max + 1)
-        // Compressed: sum(0.9^i)
-        // Let's use simple geometric series sum logic. 
-        // step[i] = base * factor^i
-        // y[d] = sum(step[0]..step[d-1])
-        // total_height = sum(step[0]..step[max])
+    // Helper: Logical (Freq 0..1, Depth 0..1) -> Screen Pos
+    let to_screen = |freq: f32, depth_norm: f32| -> Pos2 {
+        // X = Depth (Left to Right)
+        let base_x = depth_norm * rect.width();
+        let screen_x = rect.min.x + view.offset.x + base_x * view.scale;
         
-        let base = 1.0;
-        let factor: f32 = 0.85; // Compression factor
+        // Y = Frequency (Bottom to Top for Low->High)
+        // 0.0 freq = Bottom, 1.0 freq = Top
+        // In screen Y: Bottom is max_y, Top is min_y.
+        // base_y_from_bottom = freq * rect.height();
+        // screen_y = rect.max.y + view.offset.y - base_y_from_bottom * view.scale;
         
-        let mut y = 0.0;
-        for i in 0..d {
-            y += base * factor.powf(i as f32);
-        }
+        let base_y_from_bottom = freq * rect.height();
+        let screen_y = rect.max.y + view.offset.y - base_y_from_bottom * view.scale;
         
-        // Normalize
-        let mut total = 0.0;
-        for i in 0..=max_depth {
-            total += base * factor.powf(i as f32);
-        }
-        
-        // Add margins
-        let margin_top = 0.05;
-        let margin_bot = 0.05;
-        let useful = 1.0 - margin_top - margin_bot;
-        
-        margin_top + (y / total) * useful
+        Pos2::new(screen_x, screen_y)
     };
 
     // Recursive Drawing
-    // We draw from Root. Logical coords: X [0..1], Y [0..1]
     fn draw_node(
         painter: &egui::Painter,
         ui: &egui::Ui,
-        to_screen: &dyn Fn(Pos2) -> Pos2,
+        to_screen: &dyn Fn(f32, f32) -> Pos2,
         path: String,
         depth: usize,
         max_depth: usize,
         index: usize,
-        logical_pos: Pos2,
-        logical_width: f32, // Width covered by this node's subtree (at this depth)
+        freq_center: f32, // 0..1
+        freq_width: f32, // 0..1
         current_dests: &mut Vec<String>,
         changed: &mut bool,
-        sample_rate: f32, // Added
-        get_y_for_depth: &dyn Fn(usize) -> f32, // Passed closure
+        sample_rate: f32,
+        get_x_for_depth: &dyn Fn(usize) -> f32,
     ) {
-        let _is_dest = current_dests.contains(&path);
-        
-        // Check if children exist
-        // Efficient check: Does any dest start with `path`?
         let mut is_leaf = false;
         let mut is_splitter = false;
         
@@ -466,58 +401,61 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
             is_splitter = true; 
         }
 
-        let screen_pos = to_screen(logical_pos);
+        let depth_x = get_x_for_depth(depth);
+        let screen_pos = to_screen(freq_center, depth_x);
         
-        // Draw connections to children if split
+        // Draw connections to children
         if is_splitter && depth < max_depth {
-            let _y_curr = get_y_for_depth(depth);
-            let y_next = get_y_for_depth(depth + 1);
+            let next_depth_x = get_x_for_depth(depth + 1);
             
-            // Left Child
+            // Left Child (Low Freq) -> Lower in value (0..1), so closer to 0. 
+            // In our Y mapping (Low=Bottom), 0 is Bottom. 
+            // So "Low Freq" child is visually Below (Higher Y pixel value).
+            // Wait, freq 0 is Bottom. freq 0.25 is "Higher" than freq 0.
+            // freq 0.75 is "Higher" than freq 0.25.
+            
+            // L Child = Center - Width/4. (Lower frequency).
+            // R Child = Center + Width/4. (Higher frequency).
+            
+            // Left Child (Low Freq)
             let l_idx = index << 1;
-            let l_log_pos = Pos2::new(logical_pos.x - logical_width / 4.0, y_next);
-            let l_screen = to_screen(l_log_pos);
+            let l_freq = freq_center - freq_width / 4.0;
+            let l_screen = to_screen(l_freq, next_depth_x);
             
             painter.line_segment([screen_pos, l_screen], Stroke::new(1.0, TEXT_DIM.gamma_multiply(0.3)));
-            draw_node(painter, ui, to_screen, path.clone() + "L", depth + 1, max_depth, l_idx, l_log_pos, logical_width / 2.0, current_dests, changed, sample_rate, get_y_for_depth);
+            draw_node(painter, ui, to_screen, path.clone() + "L", depth + 1, max_depth, l_idx, l_freq, freq_width / 2.0, current_dests, changed, sample_rate, get_x_for_depth);
 
-            // Right Child
+            // Right Child (High Freq)
             let r_idx = (index << 1) | 1;
-            let r_log_pos = Pos2::new(logical_pos.x + logical_width / 4.0, y_next);
-            let r_screen = to_screen(r_log_pos);
+            let r_freq = freq_center + freq_width / 4.0;
+            let r_screen = to_screen(r_freq, next_depth_x);
             
             painter.line_segment([screen_pos, r_screen], Stroke::new(1.0, TEXT_DIM.gamma_multiply(0.3)));
-            draw_node(painter, ui, to_screen, path.clone() + "H", depth + 1, max_depth, r_idx, r_log_pos, logical_width / 2.0, current_dests, changed, sample_rate, get_y_for_depth);
+            draw_node(painter, ui, to_screen, path.clone() + "H", depth + 1, max_depth, r_idx, r_freq, freq_width / 2.0, current_dests, changed, sample_rate, get_x_for_depth);
         }
 
         // Draw Node
-        let radius = 6.0; // Scalable?
+        let radius = 6.0; 
         let color = if is_leaf { ACCENT_COLOR } else { BG_COLOR };
         let stroke_color = if is_leaf { Color32::WHITE } else { TEXT_DIM };
         
-        // Interaction
         let node_rect = Rect::from_center_size(screen_pos, egui::vec2(radius*2.0, radius*2.0));
         let response = ui.interact(node_rect, ui.id().with(index), egui::Sense::click());
 
         if response.clicked() {
             if is_leaf {
-                // SPLIT ACTION
                 if depth < max_depth {
-                    // Remove self, add children
                     current_dests.retain(|p| p != &path);
                     current_dests.push(path.clone() + "L");
                     current_dests.push(path.clone() + "H");
                     *changed = true;
                 }
             } else if is_splitter {
-                // MERGE ACTION
-                // Remove all descendants, add self
                 let p_len = path.len();
-                // Check if any children exist before merging
                 let has_children = current_dests.iter().any(|p| p.starts_with(&path) && p.len() > p_len);
                 if has_children {
-                    current_dests.retain(|p| !p.starts_with(&path)); // Remove children
-                    current_dests.push(path.clone()); // Add self
+                    current_dests.retain(|p| !p.starts_with(&path));
+                    current_dests.push(path.clone());
                     *changed = true;
                 }
             }
@@ -526,12 +464,9 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
         if response.hovered() {
             painter.circle_filled(screen_pos, radius * 1.5, ACCENT_COLOR.gamma_multiply(0.3));
             response.on_hover_ui(|ui| {
-                // Calculate frequency range
-                // x center is logical_pos.x [0..1]
-                // logical_width covers the band.
                 let nyquist = sample_rate / 2.0;
-                let center_hz = logical_pos.x * nyquist;
-                let bw_hz = logical_width * nyquist;
+                let center_hz = freq_center * nyquist;
+                let bw_hz = freq_width * nyquist;
                 let min_hz = center_hz - bw_hz / 2.0;
                 let max_hz = center_hz + bw_hz / 2.0;
                 
@@ -545,84 +480,74 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
         }
 
         painter.circle_filled(screen_pos, radius, color);
-        // Dim splitters
         let final_stroke_color = if is_splitter { stroke_color.gamma_multiply(0.5) } else { stroke_color };
         painter.circle_stroke(screen_pos, radius, Stroke::new(1.0, final_stroke_color));
     }
 
-    // Start drawing
+    // Start drawing (Root at Freq 0.5, Depth 0)
     draw_node(
-        &painter, 
-        ui, 
-        &to_screen, 
-        "".to_string(), 
-        0, 
-        max_depth, 
-        1, 
-        Pos2::new(0.5, get_y_for_depth(0)), 
-        1.0, 
-        &mut current_dests, 
-        &mut changed,
-        sample_rate,
-        &get_y_for_depth,
+        &painter, ui, &to_screen, 
+        "".to_string(), 0, max_depth, 1, 
+        0.5, 1.0, 
+        &mut current_dests, &mut changed, sample_rate, &get_x_for_depth
     );
     
-    // Draw Axis (Fixed at bottom of view)
-    let axis_y = rect.max.y - 20.0;
+    // Axis (Right Side)
+    // Vertical line at rect.max.x - margin
+    let axis_x = rect.max.x - 30.0; // Fixed visual position?
+    // Wait, if we use zoom/pan, logical axis position?
+    // "Frequency axis is on the right".
+    // Does it move with nodes? Or is it fixed overlay?
+    // Usually fixed overlay. But if nodes pan/zoom, axis labels must match.
+    // The previous implementation inferred ticks from logical coords.
     
-    // Project logical X (0..1) to screen X
-    let to_screen_x = |lx: f32| -> f32 {
-        rect.min.x + view.offset.x + lx * rect.width() * view.scale
-    };
-
-    let start_x = to_screen_x(0.0);
-    let end_x = to_screen_x(1.0);
+    // Draw Axis line (Fixed UI element or Logical?)
+    // Let's make it fixed in Screen X, but Ticks move in Screen Y.
     
-    // Axis visible range
-    // We only draw if the axis line intersects the view rect horizontally
-    // But conceptually the axis is infinite or 0..1? 0..1.
+    let axis_top = rect.min.y;
+    let axis_bottom = rect.max.y;
     
-    // Draw background for axis?
-    // painter.rect_filled(Rect::from_x_y_ranges(rect.x_range(), (axis_y-10.0)..=rect.max.y), 0.0, Color32::from_black_alpha(100));
-
-    painter.line_segment([Pos2::new(start_x, axis_y), Pos2::new(end_x, axis_y)], Stroke::new(1.0, TEXT_DIM));
+    painter.line_segment(
+        [Pos2::new(axis_x, axis_bottom), Pos2::new(axis_x, axis_top)], 
+        Stroke::new(1.0, TEXT_DIM)
+    );
     
-    // Adaptive Ticks
-    // Nyquist Hz = sample_rate / 2.0
-    // We want ticks at nice Hz intervals.
+    // Adaptive Ticks Y
     let nyquist = sample_rate / 2.0;
-    let width_px = end_x - start_x;
     
-    // How many pixels per 1kHz?
-    // px_per_hz = width_px / nyquist;
-    // We want min 50px between ticks.
-    // min_hz_step = 50.0 / px_per_hz = 50.0 * nyquist / width_px
+    // Height in pixels mapping 0..Nyquist
+    // 0Hz = rect.max.y + view.offset.y
+    // Nyq = rect.max.y + view.offset.y - rect.height() * view.scale
     
-    let min_px_step = 60.0;
-    if width_px > 1.0 {
-        let min_hz_step = min_px_step * nyquist / width_px;
+    // Screen height range for signals: rect.height() * view.scale.
+    // Pixel range = rect.height() * view.scale.
+    // HZ range = nyquist.
+    // Px per Hz = (rect.height() * view.scale) / nyquist.
+    
+    let px_per_hz = (rect.height() * view.scale) / nyquist;
+    let min_px_step = 40.0;
+    
+    if px_per_hz > 0.0001 { // Prevent div/0
+        let min_hz_step = min_px_step / px_per_hz;
         
-        // Find nice step (100, 500, 1000, 5000...)
         let magnitude = 10.0f32.powf(min_hz_step.log10().floor());
         let residual = min_hz_step / magnitude;
-        let nice_step = if residual > 5.0 {
-            10.0 * magnitude
-        } else if residual > 2.0 {
-            5.0 * magnitude
-        } else {
-            2.0 * magnitude // or 1.0
-        };
+        let nice_step = if residual > 5.0 { 10.0 * magnitude } 
+                        else if residual > 2.0 { 5.0 * magnitude } 
+                        else { 2.0 * magnitude };
         
         let start_hz = 0.0;
         let mut curr_hz = start_hz;
         
         while curr_hz <= nyquist {
-            let t = curr_hz / nyquist;
-            let x = to_screen_x(t);
+            let t = curr_hz / nyquist; // 0..1
             
-            if rect.x_range().contains(x) {
-                let tick_pos = Pos2::new(x, axis_y);
-                painter.line_segment([tick_pos, tick_pos + egui::vec2(0.0, 5.0)], Stroke::new(1.0, TEXT_DIM));
+            // Map t (freq) to Screen Y
+            let y = rect.max.y + view.offset.y - (t * rect.height() * view.scale);
+            
+            if rect.y_range().contains(y) {
+                let tick_pos = Pos2::new(axis_x, y);
+                painter.line_segment([tick_pos, tick_pos + egui::vec2(5.0, 0.0)], Stroke::new(1.0, TEXT_DIM));
                 
                 let text = if curr_hz >= 1000.0 {
                     format!("{:.1}k", curr_hz / 1000.0)
@@ -631,8 +556,8 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
                 };
                 
                 painter.text(
-                    tick_pos + egui::vec2(0.0, 8.0),
-                    egui::Align2::CENTER_TOP,
+                    tick_pos + egui::vec2(8.0, 0.0),
+                    egui::Align2::LEFT_CENTER,
                     text,
                     egui::FontId::proportional(10.0),
                     TEXT_DIM,
@@ -641,8 +566,6 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
             curr_hz += nice_step;
         }
     }
-     // Removed Text Controls Instructions for cleaner view
-     // painter.text(...)
 
     if changed {
         let mut config = state.config.lock().unwrap();
