@@ -314,15 +314,14 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
     if response.hovered() {
         let zoom_delta = ui.input(|i| i.zoom_delta());
         if zoom_delta != 1.0 {
-            // Zoom centered roughly? Or just simplistic scale.
-            // Let's zoom towards pointer for better UX.
             let pointer = ui.input(|i| i.pointer.hover_pos()).unwrap_or(rect.center()) - rect.min.to_vec2();
-            // P_visual = offset + P_logical * size * scale
-            // P_visual - pointer = new_offset + ...
-            // Simplified: Scale around pointer.
-            // offset' = pointer - (pointer - offset) * zoom
-            view.offset = pointer.to_vec2() + (view.offset - pointer.to_vec2()) * zoom_delta;
-            view.scale *= zoom_delta;
+            
+            // Calculate new scale with clamping
+            let new_scale = (view.scale * zoom_delta).clamp(0.1, 10.0);
+            let effective_zoom = new_scale / view.scale;
+            
+            view.offset = pointer.to_vec2() + (view.offset - pointer.to_vec2()) * effective_zoom;
+            view.scale = new_scale;
         }
     }
     
@@ -335,6 +334,15 @@ fn draw_topology_editor(ui: &mut egui::Ui, rect: Rect, state: &SharedTopologySta
 
     // Clip
     let painter = ui.painter().with_clip_rect(rect);
+    
+    // Instructions Overlay
+    painter.text(
+        rect.min + egui::vec2(10.0, 10.0),
+        egui::Align2::LEFT_TOP,
+        "Left Click: Split/Merge\nDrag: Pan\nScroll: Zoom",
+        egui::FontId::proportional(12.0),
+        TEXT_DIM.gamma_multiply(0.8),
+    );
 
     // Get current destinations
     let mut current_dests = {
