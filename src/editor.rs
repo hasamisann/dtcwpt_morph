@@ -1,7 +1,7 @@
 use nih_plug::prelude::*;
 use nih_plug_egui::egui::{self, Color32, RichText, Rect, Pos2, Stroke, CornerRadius, UiBuilder};
 use nih_plug_egui::{create_egui_editor, EguiState};
-use nih_plug_egui::resizable_window::ResizableWindow;
+
 use std::sync::Arc;
 
 use crate::{DtcwptMorphParams, SharedTopologyState};
@@ -50,239 +50,217 @@ pub fn create(
         GuiState { view: View::Main },
         |_, _| {},
         move |egui_ctx, setter, state| {
-            // Manual Resizing Wrapper
-            ResizableWindow::new("editor-resize")
-                .min_size(egui::vec2(210.0, 252.0)) // 0.7x of 300x360
-                .show(egui_ctx, &editor_state, |ui| {
-                    // Ensure background fills the resizeable window
-                    egui::Frame::default()
-                        .fill(BG_COLOR)
-                        .inner_margin(0.0) // Manual margin inside
-                        .show(ui, |ui| {
-                            ui.set_min_size(ui.available_size()); // Expand to fill window
-
-                            match state.view {
-                                View::Main => {
-                                    ui.vertical(|ui| {
-                                        // ========== HEADER ==========
-                                        egui::Frame::default()
-                                            .fill(HEADER_COLOR)
-                                            .inner_margin(egui::Margin::symmetric(12, 8))
-                                            .show(ui, |ui| {
-                                                ui.horizontal(|ui| {
-                                                    ui.label(RichText::new("DT-CWPT Morph").size(14.0).strong().color(Color32::WHITE));
-                                                    
-                                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                                        // Gear -> Settings
-                                                        if ui.button(RichText::new("⚙").color(TEXT_COLOR)).clicked() {
-                                                            state.view = View::Settings;
-                                                        }
-                                                        ui.add_space(8.0);
-                                                        // Info -> About
-                                                        if ui.button(RichText::new("ℹ").color(TEXT_COLOR)).clicked() {
-                                                            state.view = View::About;
-                                                        }
-                                                    });
-                                                });
-                                            });
-
-                                        ui.add_space(10.0);
-
-                                        // Calculate heights for layout
-                                        let available_h = ui.available_height();
-                                        let params_h = 130.0; // Approx height needed for params
-                                        let padding = 30.0;
-                                        let min_analyzer_h = 140.0;
-                                        
-                                        // Expand analyzer to fill space, but respect min height
-                                        let analyzer_h = (available_h - params_h - padding).max(min_analyzer_h);
-
-                                        // ========== ANALYZER ==========
-                                        egui::Frame::default()
-                                            .fill(Color32::from_rgb(25, 25, 35))
-                                            .corner_radius(4.0)
-                                            .inner_margin(10)
-                                            .show(ui, |ui| {
-                                                ui.set_min_width(ui.available_width());
-                                                ui.set_height(analyzer_h);
-                                                
-                                                ui.vertical_centered(|ui| {
-                                                     // Center content in the analyzer rect
-                                                     ui.allocate_ui_with_layout(
-                                                         egui::vec2(ui.available_width(), analyzer_h),
-                                                         egui::Layout::centered_and_justified(egui::Direction::TopDown),
-                                                         |ui| {
-                                                            ui.label(RichText::new("Analyzer Placeholder").color(TEXT_DIM));
-                                                         }
-                                                     );
-                                                });
-                                            });
-
-                                        ui.add_space(15.0);
-
-                                        // ========== PARAMETERS ==========
-                                        egui::Frame::default().inner_margin(10).show(ui, |ui| {
-                                            ui.vertical(|ui| {
-                                                // Sliders row - Grid Layout (3 columns)
-                                                ui.columns(3, |cols| {
-                                                    // Magnitude
-                                                    cols[0].vertical_centered(|ui| {
-                                                        let mut mag = params.mag.value();
-                                                        let response = ui.add(crate::knob::Knob::new(&mut mag, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
-                                                            .with_size(30.0)
-                                                            .with_sweep_range(0.125, 0.75)
-                                                            .with_label("Magnitude", crate::knob::LabelPosition::Bottom)
-                                                            .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
-                                                            .with_drag_sensitivity(0.015));
-                                                        if response.changed() {
-                                                            setter.begin_set_parameter(&params.mag);
-                                                            setter.set_parameter(&params.mag, mag);
-                                                            setter.end_set_parameter(&params.mag);
-                                                        }
-                                                        response.context_menu(|ui| {
-                                                            if ui.add(egui::DragValue::new(&mut mag).speed(0.01).range(0.0..=1.0)).changed() {
-                                                                setter.begin_set_parameter(&params.mag);
-                                                                setter.set_parameter(&params.mag, mag);
-                                                                setter.end_set_parameter(&params.mag);
-                                                            }
-                                                        });
-                                                    });
-            
-                                                    // Phase
-                                                    cols[1].vertical_centered(|ui| {
-                                                        let mut phase = params.phase.value();
-                                                        let response = ui.add(crate::knob::Knob::new(&mut phase, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
-                                                            .with_size(30.0)
-                                                            .with_sweep_range(0.125, 0.75)
-                                                            .with_label("Phase", crate::knob::LabelPosition::Bottom)
-                                                            .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
-                                                            .with_drag_sensitivity(0.015));
-                                                        if response.changed() {
-                                                            setter.begin_set_parameter(&params.phase);
-                                                            setter.set_parameter(&params.phase, phase);
-                                                            setter.end_set_parameter(&params.phase);
-                                                        }
-                                                        response.context_menu(|ui| {
-                                                            if ui.add(egui::DragValue::new(&mut phase).speed(0.01).range(0.0..=1.0)).changed() {
-                                                                setter.begin_set_parameter(&params.phase);
-                                                                setter.set_parameter(&params.phase, phase);
-                                                                setter.end_set_parameter(&params.phase);
-                                                            }
-                                                        });
-                                                    });
-            
-                                                    // Threshold
-                                                    cols[2].vertical_centered(|ui| {
-                                                        let mut thr = params.threshold.value();
-                                                        let response = ui.add(crate::knob::Knob::new(&mut thr, -60.0, 0.0, crate::knob::KnobStyle::Wiper)
-                                                            .with_size(30.0)
-                                                            .with_sweep_range(0.125, 0.75)
-                                                            .with_label("Threshold", crate::knob::LabelPosition::Bottom)
-                                                            .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
-                                                            .with_drag_sensitivity(0.015)
-                                                            .with_label_format(|v| format!("{:.1} dB", v)));
-                                                        if response.changed() {
-                                                            setter.begin_set_parameter(&params.threshold);
-                                                            setter.set_parameter(&params.threshold, thr);
-                                                            setter.end_set_parameter(&params.threshold);
-                                                        }
-                                                        response.context_menu(|ui| {
-                                                            if ui.add(egui::DragValue::new(&mut thr).speed(1.0).range(-60.0..=0.0).suffix(" dB")).changed() {
-                                                                setter.begin_set_parameter(&params.threshold);
-                                                                setter.set_parameter(&params.threshold, thr);
-                                                                setter.end_set_parameter(&params.threshold);
-                                                            }
-                                                        });
-                                                    });
-                                                });
-            
-                                                ui.add_space(15.0);
-            
-                                                // Bypass row
-                                                ui.horizontal(|ui| {
-                                                    ui.add_space(20.0);
-                                                    let mut bypass_low = params.bypass_low.value();
-                                                    let mut bypass_high = params.bypass_high.value();
-            
-                                                    ui.label(RichText::new("Bypass:").size(12.0).color(TEXT_COLOR));
-                                                    ui.add_space(10.0);
-            
-                                                    if ui.checkbox(&mut bypass_low, "Low").changed() {
-                                                        setter.begin_set_parameter(&params.bypass_low);
-                                                        setter.set_parameter(&params.bypass_low, bypass_low);
-                                                        setter.end_set_parameter(&params.bypass_low);
-                                                    }
-                                                    ui.add_space(20.0);
-                                                    if ui.checkbox(&mut bypass_high, "High").changed() {
-                                                        setter.begin_set_parameter(&params.bypass_high);
-                                                        setter.set_parameter(&params.bypass_high, bypass_high);
-                                                        setter.end_set_parameter(&params.bypass_high);
-                                                    }
-                                                });
+            // Fixed Size Window - No Resizing
+            egui::CentralPanel::default()
+                .show(egui_ctx, |ui| {
+                     // Main Layout Logic
+                     ui.set_min_size(egui::vec2(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32));
+                     
+                     match state.view {
+                        View::Main => {
+                            ui.vertical(|ui| {
+                                // ========== HEADER ==========
+                                egui::Frame::default()
+                                    .fill(HEADER_COLOR)
+                                    .inner_margin(egui::Margin::symmetric(12, 8))
+                                    .show(ui, |ui| {
+                                        ui.horizontal(|ui| {
+                                            ui.label(RichText::new("DT-CWPT Morph").size(14.0).strong().color(Color32::WHITE));
+                                            
+                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                                // Gear -> Settings
+                                                if ui.button(RichText::new("⚙").color(TEXT_COLOR)).clicked() {
+                                                    state.view = View::Settings;
+                                                }
+                                                ui.add_space(8.0);
+                                                // Info -> About
+                                                if ui.button(RichText::new("ℹ").color(TEXT_COLOR)).clicked() {
+                                                    state.view = View::About;
+                                                }
                                             });
                                         });
                                     });
-                                }
-                                
-                                View::Settings => {
-                                    ui.vertical(|ui| {
-                                        // Header
-                                        egui::Frame::default()
-                                            .fill(HEADER_COLOR)
-                                            .inner_margin(egui::Margin::symmetric(12, 8))
-                                            .show(ui, |ui| {
-                                                ui.horizontal(|ui| {
-                                                    if ui.button(RichText::new(" < Back ").color(TEXT_COLOR)).clicked() {
-                                                        state.view = View::Main;
-                                                    }
-                                                    ui.add_space(8.0);
-                                                    ui.label(RichText::new("Splitter Editor").size(14.0).strong().color(Color32::WHITE));
-                                                });
-                                            });
 
-                                        // Editor Content - fills remaining space
-                                        let available_size = ui.available_size();
-                                        let (rect, _) = ui.allocate_exact_size(available_size, egui::Sense::hover());
-                                        draw_topology_editor(ui, rect, &topology_state, sample_rate);
-                                    });
-                                }
-                                
-                                View::About => {
-                                    ui.vertical(|ui| {
-                                        // Header
-                                        egui::Frame::default()
-                                            .fill(HEADER_COLOR)
-                                            .inner_margin(egui::Margin::symmetric(12, 8))
-                                            .show(ui, |ui| {
-                                                ui.horizontal(|ui| {
-                                                    if ui.button(RichText::new(" < Back ").color(TEXT_COLOR)).clicked() {
-                                                        state.view = View::Main;
-                                                    }
-                                                    ui.add_space(8.0);
-                                                    ui.label(RichText::new("About").size(14.0).strong().color(Color32::WHITE));
-                                                });
-                                            });
-                                        
-                                        // About Content
+                                ui.add_space(10.0);
+
+                                // ========== ANALYZER ==========
+                                egui::Frame::default()
+                                    .fill(Color32::from_rgb(25, 25, 35))
+                                    .corner_radius(4.0)
+                                    .inner_margin(10)
+                                    .show(ui, |ui| {
+                                        ui.set_height(140.0); // Fixed Height
+                                        ui.set_width(ui.available_width());
                                         ui.vertical_centered(|ui| {
-                                            ui.add_space(60.0);
-                                            ui.label(RichText::new("DT-CWPT Morph").size(20.0).strong().color(Color32::WHITE)); 
-                                            ui.label(RichText::new("Beta Release").size(10.0).color(TEXT_DIM));
-                                            ui.add_space(30.0);
-                                            
-                                            if ui.hyperlink_to(RichText::new("GitHub Repository").size(12.0), "https://github.com/hasamisann/dtcwpt_morph").clicked() { /* */ }
-                                            ui.add_space(10.0);
-                                            if ui.hyperlink_to(RichText::new("X (Twitter): @LTSU_n_nv").size(12.0), "https://x.com/LTSU_n_nv").clicked() { /* */ }
-                                            ui.add_space(10.0);
-                                            if ui.hyperlink_to(RichText::new("SoundCloud: @LTSU_n_nv").size(12.0), "https://soundcloud.com/LTSU_n_nv").clicked() { /* */ }
-                                            
-                                            ui.add_space(50.0);
-                                            ui.label(RichText::new("VST is a registered trademark of\nSteinberg Media Technologies GmbH").size(9.0).color(TEXT_DIM));
+                                             ui.add_space(60.0); 
+                                             ui.label(RichText::new("Analyzer Placeholder").color(TEXT_DIM));
                                         });
                                     });
-                                }
-                            }
-                        });
+
+                                ui.add_space(15.0);
+
+                                // ========== PARAMETERS ==========
+                                egui::Frame::default().inner_margin(10).show(ui, |ui| {
+                                    ui.vertical(|ui| {
+                                        // Sliders row - Grid Layout (3 columns)
+                                        ui.columns(3, |cols| {
+                                            // Magnitude
+                                            cols[0].vertical_centered(|ui| {
+                                                let mut mag = params.mag.value();
+                                                let response = ui.add(crate::knob::Knob::new(&mut mag, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
+                                                    .with_size(30.0)
+                                                    .with_sweep_range(0.125, 0.75)
+                                                    .with_label("Magnitude", crate::knob::LabelPosition::Bottom)
+                                                    .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
+                                                    .with_drag_sensitivity(0.015));
+                                                if response.changed() {
+                                                    setter.begin_set_parameter(&params.mag);
+                                                    setter.set_parameter(&params.mag, mag);
+                                                    setter.end_set_parameter(&params.mag);
+                                                }
+                                                response.context_menu(|ui| {
+                                                    if ui.add(egui::DragValue::new(&mut mag).speed(0.01).range(0.0..=1.0)).changed() {
+                                                        setter.begin_set_parameter(&params.mag);
+                                                        setter.set_parameter(&params.mag, mag);
+                                                        setter.end_set_parameter(&params.mag);
+                                                    }
+                                                });
+                                            });
+    
+                                            // Phase
+                                            cols[1].vertical_centered(|ui| {
+                                                let mut phase = params.phase.value();
+                                                let response = ui.add(crate::knob::Knob::new(&mut phase, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
+                                                    .with_size(30.0)
+                                                    .with_sweep_range(0.125, 0.75)
+                                                    .with_label("Phase", crate::knob::LabelPosition::Bottom)
+                                                    .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
+                                                    .with_drag_sensitivity(0.015));
+                                                if response.changed() {
+                                                    setter.begin_set_parameter(&params.phase);
+                                                    setter.set_parameter(&params.phase, phase);
+                                                    setter.end_set_parameter(&params.phase);
+                                                }
+                                                response.context_menu(|ui| {
+                                                    if ui.add(egui::DragValue::new(&mut phase).speed(0.01).range(0.0..=1.0)).changed() {
+                                                        setter.begin_set_parameter(&params.phase);
+                                                        setter.set_parameter(&params.phase, phase);
+                                                        setter.end_set_parameter(&params.phase);
+                                                    }
+                                                });
+                                            });
+    
+                                            // Threshold
+                                            cols[2].vertical_centered(|ui| {
+                                                let mut thr = params.threshold.value();
+                                                let response = ui.add(crate::knob::Knob::new(&mut thr, -60.0, 0.0, crate::knob::KnobStyle::Wiper)
+                                                    .with_size(30.0)
+                                                    .with_sweep_range(0.125, 0.75)
+                                                    .with_label("Threshold", crate::knob::LabelPosition::Bottom)
+                                                    .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
+                                                    .with_drag_sensitivity(0.015)
+                                                    .with_label_format(|v| format!("{:.1} dB", v)));
+                                                if response.changed() {
+                                                    setter.begin_set_parameter(&params.threshold);
+                                                    setter.set_parameter(&params.threshold, thr);
+                                                    setter.end_set_parameter(&params.threshold);
+                                                }
+                                                response.context_menu(|ui| {
+                                                    if ui.add(egui::DragValue::new(&mut thr).speed(1.0).range(-60.0..=0.0).suffix(" dB")).changed() {
+                                                        setter.begin_set_parameter(&params.threshold);
+                                                        setter.set_parameter(&params.threshold, thr);
+                                                        setter.end_set_parameter(&params.threshold);
+                                                    }
+                                                });
+                                            });
+                                        });
+    
+                                        ui.add_space(15.0);
+    
+                                        // Bypass row
+                                        ui.horizontal(|ui| {
+                                            ui.add_space(20.0);
+                                            let mut bypass_low = params.bypass_low.value();
+                                            let mut bypass_high = params.bypass_high.value();
+    
+                                            ui.label(RichText::new("Bypass:").size(12.0).color(TEXT_COLOR));
+                                            ui.add_space(10.0);
+    
+                                            if ui.checkbox(&mut bypass_low, "Low").changed() {
+                                                setter.begin_set_parameter(&params.bypass_low);
+                                                setter.set_parameter(&params.bypass_low, bypass_low);
+                                                setter.end_set_parameter(&params.bypass_low);
+                                            }
+                                            ui.add_space(20.0);
+                                            if ui.checkbox(&mut bypass_high, "High").changed() {
+                                                setter.begin_set_parameter(&params.bypass_high);
+                                                setter.set_parameter(&params.bypass_high, bypass_high);
+                                                setter.end_set_parameter(&params.bypass_high);
+                                            }
+                                        });
+                                    });
+                                });
+                            });
+                        }
+                        
+                        View::Settings => {
+                            ui.vertical(|ui| {
+                                // Header
+                                egui::Frame::default()
+                                    .fill(HEADER_COLOR)
+                                    .inner_margin(egui::Margin::symmetric(12, 8))
+                                    .show(ui, |ui| {
+                                        ui.horizontal(|ui| {
+                                            if ui.button(RichText::new(" < Back ").color(TEXT_COLOR)).clicked() {
+                                                state.view = View::Main;
+                                            }
+                                            ui.add_space(8.0);
+                                            ui.label(RichText::new("Splitter Editor").size(14.0).strong().color(Color32::WHITE));
+                                        });
+                                    });
+
+                                // Editor Content - fills remaining space
+                                let available_size = ui.available_size(); // Available in fixed window
+                                let (rect, _) = ui.allocate_exact_size(available_size, egui::Sense::hover());
+                                draw_topology_editor(ui, rect, &topology_state, sample_rate);
+                            });
+                        }
+                        
+                        View::About => {
+                            ui.vertical(|ui| {
+                                // Header
+                                egui::Frame::default()
+                                    .fill(HEADER_COLOR)
+                                    .inner_margin(egui::Margin::symmetric(12, 8))
+                                    .show(ui, |ui| {
+                                        ui.horizontal(|ui| {
+                                            if ui.button(RichText::new(" < Back ").color(TEXT_COLOR)).clicked() {
+                                                state.view = View::Main;
+                                            }
+                                            ui.add_space(8.0);
+                                            ui.label(RichText::new("About").size(14.0).strong().color(Color32::WHITE));
+                                        });
+                                    });
+                                
+                                // About Content
+                                ui.vertical_centered(|ui| {
+                                    ui.add_space(60.0);
+                                    ui.label(RichText::new("DT-CWPT Morph").size(20.0).strong().color(Color32::WHITE)); 
+                                    ui.label(RichText::new("Beta Release").size(10.0).color(TEXT_DIM));
+                                    ui.add_space(30.0);
+                                    
+                                    if ui.hyperlink_to(RichText::new("GitHub Repository").size(12.0), "https://github.com/hasamisann/dtcwpt_morph").clicked() { /* */ }
+                                    ui.add_space(10.0);
+                                    if ui.hyperlink_to(RichText::new("X (Twitter): @LTSU_n_nv").size(12.0), "https://x.com/LTSU_n_nv").clicked() { /* */ }
+                                    ui.add_space(10.0);
+                                    if ui.hyperlink_to(RichText::new("SoundCloud: @LTSU_n_nv").size(12.0), "https://soundcloud.com/LTSU_n_nv").clicked() { /* */ }
+                                    
+                                    ui.add_space(50.0);
+                                    ui.label(RichText::new("VST is a registered trademark of\nSteinberg Media Technologies GmbH").size(9.0).color(TEXT_DIM));
+                                });
+                            });
+                        }
+                    }
                 });
         },
     )
