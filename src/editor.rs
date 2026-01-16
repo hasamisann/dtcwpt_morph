@@ -10,9 +10,9 @@ const WINDOW_WIDTH: u32 = 280;
 const WINDOW_HEIGHT: u32 = 360;
 
 // Colors
-const BG_COLOR: Color32 = Color32::from_rgb(20, 20, 28);
-const HEADER_COLOR: Color32 = Color32::from_rgb(30, 30, 40);
-const ACCENT_COLOR: Color32 = Color32::from_rgb(180, 160, 100); // Gold accent
+const BG_COLOR: Color32 = Color32::from_rgb(18, 18, 27);
+const HEADER_COLOR: Color32 = Color32::from_rgb(27, 27, 36);
+const ACCENT_COLOR: Color32 = Color32::from_rgb(115, 170, 230);
 const TEXT_COLOR: Color32 = Color32::from_rgb(220, 220, 220);
 const TEXT_DIM: Color32 = Color32::from_rgb(150, 150, 150);
 
@@ -115,7 +115,7 @@ pub fn create(
                                             cols[0].vertical_centered(|ui| {
                                                 let mut mag = params.mag.value();
                                                 let response = ui.add(crate::knob::Knob::new(&mut mag, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
-                                                    .with_size(30.0)
+                                                    .with_size(40.0)
                                                     .with_sweep_range(0.125, 0.75)
                                                     .with_label("Mag", crate::knob::LabelPosition::Bottom)
                                                     .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
@@ -138,7 +138,7 @@ pub fn create(
                                             cols[1].vertical_centered(|ui| {
                                                 let mut phase = params.phase.value();
                                                 let response = ui.add(crate::knob::Knob::new(&mut phase, 0.0, 1.0, crate::knob::KnobStyle::Wiper)
-                                                    .with_size(30.0)
+                                                    .with_size(40.0)
                                                     .with_sweep_range(0.125, 0.75)
                                                     .with_label("Phase", crate::knob::LabelPosition::Bottom)
                                                     .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
@@ -161,7 +161,7 @@ pub fn create(
                                             cols[2].vertical_centered(|ui| {
                                                 let mut thr = params.threshold.value();
                                                 let response = ui.add(crate::knob::Knob::new(&mut thr, -60.0, 0.0, crate::knob::KnobStyle::Wiper)
-                                                    .with_size(30.0)
+                                                    .with_size(40.0)
                                                     .with_sweep_range(0.125, 0.75)
                                                     .with_label("Thres", crate::knob::LabelPosition::Bottom)
                                                     .with_colors(TEXT_DIM, ACCENT_COLOR, TEXT_DIM)
@@ -224,7 +224,6 @@ pub fn create(
                                                 ui.available_size(),
                                                 egui::Layout::right_to_left(egui::Align::Center), 
                                                 |ui| {
-                                                     // Widen Back button (approx 1.2x)
                                                      ui.spacing_mut().button_padding.x *= 1.5; 
                                                      if ui.button(RichText::new("Back").color(TEXT_COLOR)).clicked() {
                                                          state.view = View::Main;
@@ -269,7 +268,7 @@ pub fn create(
                                 ui.vertical_centered(|ui| {
                                     ui.add_space(60.0);
                                     ui.label(RichText::new("DT-CWPT Morph").size(20.0).strong().color(Color32::WHITE)); 
-                                    ui.label(RichText::new("Beta Release").size(10.0).color(TEXT_DIM));
+                                    ui.label(RichText::new(format!("v{} Beta", env!("CARGO_PKG_VERSION"))).size(12.0).color(TEXT_DIM));
                                     ui.add_space(30.0);
                                     
                                     if ui.hyperlink_to(RichText::new("GitHub Repository").size(12.0), "https://github.com/hasamisann/dtcwpt_morph").clicked() { /* */ }
