@@ -31,17 +31,3 @@ This project is built with Rust and the nih-plug framework.
 git clone https://github.com/hasamisann/dtcwpt_morph.git
 cd dtcwpt_morph
 ```
-
-### Compiling
-Use `cargo xtask` to bundle the plugin for your platform (VST®3/CLAP).
-
-```bash
-# Build Release version
-cargo xtask bundle dtcwpt_morph --release
-```
-
-The compiled binary will be located in:
-`target/bundled/Dtcwpt Morph.vst3` (or `.clap`)
-
-
-VST is a registered trademark of Steinberg Media Technologies GmbH.
