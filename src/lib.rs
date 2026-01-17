@@ -12,6 +12,8 @@ mod morph;
 mod nodes;
 mod processor;
 mod topology;
+mod analyzer;
+use analyzer::SharedAnalyzerData;
 
 #[derive(Clone)]
 pub struct TopologyConfig {
@@ -96,6 +98,11 @@ pub struct DtcwptMorph {
     // Runtime config
     sample_rate: f32,
     max_block_size: u32,
+
+    // Analyzer state and buffers
+    analyzer_data: Arc<SharedAnalyzerData>,
+    analyzer_input_l: Vec<f64>,
+    analyzer_input_r: Vec<f64>,
 }
 
 impl Default for DtcwptMorph {
@@ -126,6 +133,9 @@ impl Default for DtcwptMorph {
             current_latency: 0,
             sample_rate: 44100.0,
             max_block_size: 512,
+            analyzer_data: Arc::new(SharedAnalyzerData::new()),
+            analyzer_input_l: Vec::new(),
+            analyzer_input_r: Vec::new(),
         }
     }
 }
@@ -159,6 +169,7 @@ impl Plugin for DtcwptMorph {
             self.params.clone(),
             editor::default_state(),
             self.topology_state.clone(),
+            self.analyzer_data.clone(),
             self.sample_rate,
         )
     }
@@ -171,6 +182,8 @@ impl Plugin for DtcwptMorph {
     ) -> bool {
         self.sample_rate = buffer_config.sample_rate;
         self.max_block_size = buffer_config.max_buffer_size;
+        
+        self.analyzer_data.set_sample_rate(self.sample_rate);
 
         let destinations = {
             let config = self.topology_state.config.lock().unwrap();
@@ -190,6 +203,8 @@ impl Plugin for DtcwptMorph {
         self.scratch_main_r = vec![0.0; max_size];
         self.scratch_sc_l = vec![0.0; max_size];
         self.scratch_sc_r = vec![0.0; max_size];
+        self.analyzer_input_l = vec![0.0; max_size];
+        self.analyzer_input_r = vec![0.0; max_size];
 
         // Report latency to host
         if let Some(ref proc) = self.processor {
@@ -269,6 +284,10 @@ impl Plugin for DtcwptMorph {
             for (i, sample) in main_channels[1].iter().enumerate() {
                 self.scratch_main_r[i] = *sample as f64;
             }
+            
+            // Snapshot input for analyzer
+            self.analyzer_input_l[..num_samples].copy_from_slice(&self.scratch_main_l[..num_samples]);
+            self.analyzer_input_r[..num_samples].copy_from_slice(&self.scratch_main_r[..num_samples]);
         }
 
         // Get sidechain data
@@ -307,6 +326,14 @@ impl Plugin for DtcwptMorph {
                 *sample = out;
             }
         }
+
+        // Push samples to analyzer
+        self.analyzer_data.push_samples(
+            &self.analyzer_input_l[..num_samples],
+            &self.analyzer_input_r[..num_samples],
+            &self.scratch_main_l[..num_samples],
+            &self.scratch_main_r[..num_samples],
+        );
 
         ProcessStatus::Normal
     }

@@ -5,6 +5,10 @@ use nih_plug_egui::{create_egui_editor, EguiState};
 use std::sync::Arc;
 
 use crate::{DtcwptMorphParams, SharedTopologyState};
+use crate::analyzer::{SharedAnalyzerData, SpectrumAnalyzer};
+
+mod analyzer_widget;
+use self::analyzer_widget::draw_spectrum_analyzer;
 
 const WINDOW_WIDTH: u32 = 280;
 const WINDOW_HEIGHT: u32 = 360;
@@ -31,11 +35,7 @@ enum View {
 
 struct GuiState {
     view: View,
-    // We need editor_state to resize window
-    // safe to keep reference? yes Arc.
-    // actually create_egui_editor takes Arc<EguiState> and passes it to us? 
-    // No, the closure only gets `egui_ctx` and `setter`. 
-    // We need to move the Arc into the closure state.
+    analyzer: Option<SpectrumAnalyzer>,
 }
 
 /// Create the egui editor.
@@ -43,11 +43,15 @@ pub fn create(
     params: Arc<DtcwptMorphParams>,
     editor_state: Arc<EguiState>,
     topology_state: Arc<SharedTopologyState>,
+    analyzer_data: Arc<SharedAnalyzerData>,
     sample_rate: f32, // Added
 ) -> Option<Box<dyn Editor>> {
     create_egui_editor(
         editor_state.clone(), // Clone for the closure
-        GuiState { view: View::Main },
+        GuiState { 
+            view: View::Main,
+            analyzer: None,
+        },
         |_, _| {},
         move |egui_ctx, setter, state| {
             // Fixed Size Window - No Resizing
@@ -93,14 +97,23 @@ pub fn create(
                                 egui::Frame::default()
                                     .fill(Color32::from_rgb(25, 25, 35))
                                     .corner_radius(4.0)
-                                    .inner_margin(10)
+                                    .inner_margin(4.0)
                                     .show(ui, |ui| {
-                                        ui.set_height(140.0); // Fixed Height
-                                        ui.set_width(ui.available_width());
-                                        ui.vertical_centered(|ui| {
-                                             ui.add_space(60.0); 
-                                             ui.label(RichText::new("Analyzer Placeholder").color(TEXT_DIM));
-                                        });
+                                        // Initialize analyzer if needed
+                                        if state.analyzer.is_none() {
+                                            state.analyzer = Some(SpectrumAnalyzer::new(analyzer_data.clone(), 0.5));
+                                        }
+                                        
+                                        let available = ui.available_size();
+                                        let height = 140.0_f32.min(available.y);
+                                        let (rect, _) = ui.allocate_exact_size(
+                                            egui::vec2(available.x, height),
+                                            egui::Sense::hover()
+                                        );
+                                        
+                                        if let Some(analyzer) = state.analyzer.as_mut() {
+                                            draw_spectrum_analyzer(ui, rect, analyzer, sample_rate);
+                                        }
                                     });
 
                                 ui.add_space(15.0);
