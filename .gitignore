@@ -8,5 +8,7 @@
 .vscode
 .idea
 *.DS_Store
-*.txt
+*log.txt
 *.pdf
+logs/
+*.backup
