@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 LTSU
 
+//! Spectrum analyzer widget for visualizing input/output frequency content.
+
 use nih_plug_egui::egui::{self, Color32, Pos2, Rect, Stroke, Mesh, epaint::Vertex};
 use crate::analyzer::{SpectrumAnalyzer, ANALYZER_NUM_BINS, ANALYZER_FFT_SIZE};
 
@@ -11,7 +13,7 @@ const FREQ_MIN: f32 = 15.0;
 // Colors (matching plugin palette)
 const INPUT_LINE: Color32 = Color32::from_rgb(150, 150, 150);
 const OUTPUT_LINE: Color32 = Color32::from_rgb(115, 170, 230);
-const GRID_COLOR: Color32 = Color32::from_rgba_premultiplied(150, 150, 150, 50);
+
 const MARGIN_RIGHT: f32 = 10.0;
 const TOP_PADDING: f32 = 5.0;
 const BOTTOM_PADDING: f32 = 15.0;
@@ -26,7 +28,7 @@ pub fn draw_spectrum_analyzer(
 ) {
     let painter = ui.painter().with_clip_rect(rect);
     let nyquist = sample_rate / 2.0;
-// Adjust drawing area (full width, with top/bottom padding)
+
 let draw_rect = Rect::from_min_max(
     Pos2::new(rect.min.x - 2.0, rect.min.y + TOP_PADDING),
     Pos2::new(rect.max.x - MARGIN_RIGHT, rect.max.y - BOTTOM_PADDING),
@@ -82,6 +84,7 @@ if !input_points.is_empty() {
     }
 }
 
+/// Convert frequency (Hz) to x-coordinate using logarithmic scale.
 fn freq_to_x(freq: f32, freq_min: f32, freq_max: f32, width: f32) -> f32 {
     let log_min = freq_min.ln();
     let log_max = freq_max.ln();
@@ -89,22 +92,23 @@ fn freq_to_x(freq: f32, freq_min: f32, freq_max: f32, width: f32) -> f32 {
     ((log_freq - log_min) / (log_max - log_min)) * width
 }
 
+/// Convert FFT bin index to frequency (Hz).
 fn bin_to_freq(bin: usize, sample_rate: f32, fft_size: usize) -> f32 {
     (bin as f32) * sample_rate / (fft_size as f32)
 }
 
+/// Convert dB value to y-coordinate in the given rect.
 fn db_to_y(db: f32, rect: Rect) -> f32 {
     let t = (db - DB_MIN) / (DB_MAX - DB_MIN);
     let t_clamped = t.clamp(0.0, 1.0);
     rect.max.y - t_clamped * rect.height()
 }
 
+/// Build a path of screen coordinates from FFT magnitude data.
 fn build_spectrum_path(mags: &[f32], rect: Rect, sample_rate: f32, freq_max: f32) -> Vec<Pos2> {
     let mut points = Vec::with_capacity(ANALYZER_NUM_BINS);
     
-    // Add start point at bottom left (now using the provided rect which may be draw_rect)
-    let start_x = rect.min.x + freq_to_x(FREQ_MIN, FREQ_MIN, freq_max, rect.width());
-    // points.push(Pos2::new(start_x, rect.max.y));
+
 
     for i in 0..ANALYZER_NUM_BINS {
         let freq = bin_to_freq(i, sample_rate, ANALYZER_FFT_SIZE);
@@ -120,6 +124,7 @@ fn build_spectrum_path(mags: &[f32], rect: Rect, sample_rate: f32, freq_max: f32
     points
 }
 
+/// Create a filled mesh from spectrum path points.
 fn create_spectrum_fill(points: &[Pos2], bottom_y: f32, color: Color32) -> Mesh {
     let mut mesh = Mesh::default();
     if points.len() < 2 { return mesh; }

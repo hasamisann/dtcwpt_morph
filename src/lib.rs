@@ -2,7 +2,6 @@
 // Copyright (C) 2026 LTSU
 
 use nih_plug::prelude::*;
-use nih_plug_egui::EguiState;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;

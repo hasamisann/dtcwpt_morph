@@ -2,7 +2,7 @@
 // Copyright (C) 2026 LTSU
 
 use nih_plug::prelude::*;
-use nih_plug_egui::egui::{self, Color32, RichText, Rect, Pos2, Stroke, CornerRadius, UiBuilder};
+use nih_plug_egui::egui::{self, Color32, RichText, Rect, Pos2, Stroke};
 use nih_plug_egui::{create_egui_editor, EguiState};
 
 use std::sync::Arc;
