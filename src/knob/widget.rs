@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 use nih_plug_egui::egui::{self, Color32, Response, Sense, Ui, Widget};
 
 use crate::knob::config::KnobConfig;

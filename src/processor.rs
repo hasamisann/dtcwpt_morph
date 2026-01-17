@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 //! Main DT-CWPT processor engine.
 //!
 //! Manages the full processing pipeline:

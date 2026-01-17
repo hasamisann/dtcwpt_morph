@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 //! DSP building blocks for DT-CWPT processing.
 //!
 //! Contains:

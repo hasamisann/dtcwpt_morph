@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 //! Topology planning for DT-CWPT tree structure.
 //!
 //! Manages the binary tree structure using heap-based indexing:

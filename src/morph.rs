@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 //! Morphing operations for DT-CWPT subbands.
 //!
 //! Implements magnitude interpolation and phase mixing (N-Lerp).

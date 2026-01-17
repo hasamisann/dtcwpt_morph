@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 //! Filter bank coefficients for DT-CWPT.
 //!
 //! Based on the Python prototype `constants.py`.

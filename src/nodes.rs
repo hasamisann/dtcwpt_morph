@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 //! Wavelet tree nodes for analysis and synthesis.
 //!
 //! - `AnalysisNode`: Downsampling + filtering (分解)

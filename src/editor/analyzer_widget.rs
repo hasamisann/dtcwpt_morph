@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 use nih_plug_egui::egui::{self, Color32, Pos2, Rect, Stroke, Mesh, epaint::Vertex};
 use crate::analyzer::{SpectrumAnalyzer, ANALYZER_NUM_BINS, ANALYZER_FFT_SIZE};
 
@@ -29,10 +32,8 @@ let draw_rect = Rect::from_min_max(
     Pos2::new(rect.max.x - MARGIN_RIGHT, rect.max.y - BOTTOM_PADDING),
 );
 
-    // (Grid lines moved to after spectrum drawing)
-
     // Fill colors (using unmultiplied alpha for intuitive control)
-    let input_fill = Color32::from_rgba_unmultiplied(150, 150, 150, 30);  // gray
+    let input_fill = Color32::from_rgba_unmultiplied(150, 150, 150, 30); // gray
     let output_fill = Color32::from_rgba_unmultiplied(115, 170, 230, 3); // blue
 
     // 2. Compute Spectrum

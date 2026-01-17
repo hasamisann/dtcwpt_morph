@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 LTSU
+
 use crate::knob::style::{KnobColors, KnobStyle, LabelPosition};
 
 pub struct KnobConfig {
